@@ -2,18 +2,28 @@ import os
 import base64
 from dotenv import load_dotenv
 from database import Base, engine
+from models import CaptionHistory, User
 Base.metadata.create_all(bind=engine)
-from models import CaptionHistory
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from database import get_db
-from crud import save_caption
+from crud import save_caption, get_all_captions
+from auth import create_access_token
+from security import hash_password, verify_password
+from pydantic import BaseModel
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
 # Load environment variables
 load_dotenv()
-CaptionHistory.metadata.create_all(bind=engine)
 # ----------------------------
 # FastAPI App
 # ----------------------------
@@ -167,4 +177,67 @@ async def generate_caption(
         "caption": caption,
         "style": style,
         "raw_description": raw_description
+    }
+
+@app.get("/history")
+def get_history(db: Session = Depends(get_db)):
+
+    history = get_all_captions(db)
+
+    return history
+
+@app.post("/signup")
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+
+    # Check if username already exists
+    existing_user = db.query(User).filter(User.username == user.username).first()
+
+    if existing_user:
+        return {"error": "Username already exists"}
+
+    # Hash the password
+    hashed_password = hash_password(user.password)
+
+    # Create new user
+    new_user = User(
+        username=user.username,
+        password=hashed_password
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "message": "User created successfully"
+    }
+
+@app.post("/login")
+def login(user: UserLogin, db: Session = Depends(get_db)):
+
+    # Find user
+    existing_user = (
+        db.query(User)
+        .filter(User.username == user.username)
+        .first()
+    )
+
+    # User not found
+    if not existing_user:
+        return {"error": "Invalid username or password"}
+
+    # Verify password
+    if not verify_password(user.password, existing_user.password):
+        return {"error": "Invalid username or password"}
+
+    # Generate JWT token
+    token = create_access_token(
+        data={
+            "sub": existing_user.username
+        }
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
     }

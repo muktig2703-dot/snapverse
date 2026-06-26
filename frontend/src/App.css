@@ -1,0 +1,76 @@
+.container {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 20px;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+.subtitle {
+  color: #cbd5e1;
+}
+
+button,
+select {
+  width: 300px;
+
+  padding: 12px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  font-size: 16px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.output {
+  width: 500px;
+
+  min-height: 120px;
+
+  background: #1e293b;
+
+  border-radius: 12px;
+
+  padding: 20px;
+
+  text-align: center;
+}
+
+.upload-btn {
+  width: 300px;
+  padding: 12px;
+
+  background: white;
+  color: black;
+
+  border-radius: 10px;
+
+  text-align: center;
+
+  cursor: pointer;
+}
+
+.preview {
+  width: 300px;
+  max-height: 300px;
+
+  object-fit: cover;
+
+  border-radius: 12px;
+
+  border: 2px solid white;
+}

@@ -21,3 +21,6 @@ def save_caption(
     db.refresh(new_caption)
 
     return new_caption
+
+def get_all_captions(db: Session):
+    return db.query(CaptionHistory).order_by(CaptionHistory.created_at.desc()).all()
