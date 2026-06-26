@@ -1,14 +1,19 @@
 import os
 import base64
 from dotenv import load_dotenv
-
+from database import Base, engine
+Base.metadata.create_all(bind=engine)
+from models import CaptionHistory
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
-
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from database import get_db
+from crud import save_caption
 # Load environment variables
 load_dotenv()
-
+CaptionHistory.metadata.create_all(bind=engine)
 # ----------------------------
 # FastAPI App
 # ----------------------------
@@ -131,7 +136,8 @@ Only return the caption.
 @app.post("/generate-caption")
 async def generate_caption(
     file: UploadFile = File(...),
-    style: str = "aesthetic"
+    style: str = "aesthetic",
+    db: Session = Depends(get_db)
 ):
 
     # Read uploaded image
@@ -147,6 +153,14 @@ async def generate_caption(
         raw_description,
         style
     )
+
+    save_caption(
+    db=db,
+    image_name=file.filename,
+    caption=caption,
+    style=style,
+    raw_description=raw_description
+)
 
     # Return response
     return {
