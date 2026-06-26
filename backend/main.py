@@ -1,12 +1,17 @@
 import os
+import base64
 from dotenv import load_dotenv
-load_dotenv()
 
-from openai import OpenAI
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-import base64
+from openai import OpenAI
 
+# Load environment variables
+load_dotenv()
+
+# ----------------------------
+# FastAPI App
+# ----------------------------
 app = FastAPI()
 
 app.add_middleware(
@@ -17,19 +22,74 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ----------------------------
+# OpenRouter Client
+# ----------------------------
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
+# ----------------------------
+# Helper Function
+# Convert image to Base64
+# ----------------------------
 def encode_image(image_bytes):
     return base64.b64encode(image_bytes).decode("utf-8")
 
-@app.post("/generate-caption")
-async def generate_caption(file: UploadFile = File(...), style: str = "aesthetic"):
 
-    text = f"""
+# ----------------------------
+# AI Call #1
+# Generate Raw Description
+# ----------------------------
+def generate_image_description(base64_image, mime_type):
+
+    response = client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": """
+Describe this image objectively.
+
+Rules:
+- Mention important objects
+- Mention people if present
+- Mention surroundings
+- Mention actions
+- No emojis
+- No Instagram captions
+- Maximum 60 words
+"""
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{base64_image}"
+                        }
+                    }
+                ]
+            }
+        ]
+    )
+
+    return response.choices[0].message.content
+
+
+# ----------------------------
+# AI Call #2
+# Generate Instagram Caption
+# ----------------------------
+def generate_instagram_caption(raw_description, style):
+
+    prompt = f"""
 You are Snapverse, an elite Instagram caption generator.
+
+Image Description:
+{raw_description}
 
 Generate a {style} Instagram caption.
 
@@ -38,44 +98,59 @@ RULES:
 - Make it engaging and scroll-stopping
 - Use emojis naturally
 - Sound like a Gen-Z creator
-- Do NOT describe the image directly
+- Do NOT simply repeat the description
 - Do NOT explain your answer
 
 STYLE GUIDE:
-- aesthetic → poetic, soft, emotional 🌸
-- funny → humorous, witty 😂
-- savage → bold, confident 🔥
-- poetic → deep, expressive 🌙
-- minimal → short, clean ✨
+- aesthetic → poetic 🌸
+- funny → witty 😂
+- savage → bold 🔥
+- poetic → emotional 🌙
+- minimal → clean ✨
 
 OUTPUT:
 Only return the caption.
 """
-    image_bytes = await file.read()
-    base64_image = encode_image(image_bytes)
 
     response = client.chat.completions.create(
-    model="openai/gpt-4o-mini",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": text
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}"
-                    }
-                }
-            ]
-        }
-    ]
-)
+        model="openai/gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
 
-    caption = response.choices[0].message.content
+    return response.choices[0].message.content
 
-    return {"caption": caption,
-            "style": style}
+
+# ----------------------------
+# API Endpoint
+# ----------------------------
+@app.post("/generate-caption")
+async def generate_caption(
+    file: UploadFile = File(...),
+    style: str = "aesthetic"
+):
+
+    # Read uploaded image
+    image_bytes = await file.read()
+    mime_type = file.content_type
+    # Convert image to Base64
+    base64_image = encode_image(image_bytes) 
+    # Step 1: Generate image description
+    raw_description = generate_image_description(base64_image, mime_type)
+
+    # Step 2: Generate Instagram caption
+    caption = generate_instagram_caption(
+        raw_description,
+        style
+    )
+
+    # Return response
+    return {
+        "caption": caption,
+        "style": style,
+        "raw_description": raw_description
+    }
