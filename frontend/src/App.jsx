@@ -9,6 +9,11 @@ function App() {
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
+
   function handleImageUpload(event) {
     const uploadedFile = event.target.files[0];
 
@@ -18,8 +23,54 @@ function App() {
     }
   }
 
+  async function handleAuth() {
+  try {
+
+    if (isLogin) {
+
+      const res = await axios.post(
+        "http://127.0.0.1:8000/login",
+        {
+          username,
+          password,
+        }
+      );
+
+      localStorage.setItem("token", res.data.access_token);
+      setToken(res.data.access_token);
+
+      alert("Logged in successfully");
+
+    } else {
+
+      await axios.post(
+        "http://127.0.0.1:8000/signup",
+        {
+          username,
+          password,
+        }
+      );
+
+      alert("Signup successful! Please login.");
+      setIsLogin(true);
+
+    }
+
+  } catch (err) {
+    alert("Authentication failed");
+    console.log(err);
+  }
+}
+
   async function generateCaption() {
+
+    if (!token) {
+  alert("Please login first");
+  return;
+}
+
     if (!file) {
+
       alert("Please upload an image first");
       return;
     }
@@ -47,6 +98,41 @@ function App() {
 
   return (
     <div className="container">
+      {!token ? (
+  <div className="auth-box">
+
+    <h2>{isLogin ? "Login" : "Signup"}</h2>
+
+    <input
+      type="text"
+      placeholder="Username"
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+    />
+
+    <input
+      type="password"
+      placeholder="Password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+    />
+
+    <button onClick={handleAuth}>
+      {isLogin ? "Login" : "Signup"}
+    </button>
+
+    <p
+      style={{ cursor: "pointer", color: "blue" }}
+      onClick={() => setIsLogin(!isLogin)}
+    >
+      {isLogin
+        ? "Don't have an account? Signup"
+        : "Already have an account? Login"}
+    </p>
+
+  </div>
+) : (
+  <>
 
       <h1>Snapverse ✨</h1>
 
@@ -84,10 +170,13 @@ function App() {
       </button>
 
       <div className="output">
-        {caption || "Your caption will appear here..."}
-      </div>
+  {caption || "Your caption will appear here..."}
+</div>
 
-    </div>
+</>
+)}
+
+</div>
   );
 }
 
