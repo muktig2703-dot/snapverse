@@ -14,6 +14,7 @@ from crud import save_caption, get_all_captions
 from auth import create_access_token
 from security import hash_password, verify_password
 from pydantic import BaseModel
+from dependencies import get_current_user
 
 class UserCreate(BaseModel):
     username: str
@@ -147,7 +148,8 @@ Only return the caption.
 async def generate_caption(
     file: UploadFile = File(...),
     style: str = "aesthetic",
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     # Read uploaded image

@@ -82,16 +82,21 @@ function App() {
     formData.append("style", style);
 
     try {
-      const res = await axios.post(
-        "http://127.0.0.1:8000/generate-caption",
-        formData
-      );
-
-      setCaption(res.data.caption);
-    } catch (error) {
-      console.log(error);
-      alert("Something went wrong");
+  const res = await axios.post(
+    "http://127.0.0.1:8000/generate-caption",
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
+  );
+
+  setCaption(res.data.caption);
+} catch (error) {
+  console.log(error);
+  alert("Something went wrong");
+}
 
     setLoading(false);
   }
