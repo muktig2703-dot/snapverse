@@ -8,9 +8,14 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from fastapi import Depends
+from fastapi import Form
 from sqlalchemy.orm import Session
 from database import get_db
-from crud import save_caption, get_all_captions
+from crud import (
+    save_caption,
+    get_user_captions,
+    delete_caption
+)
 from auth import create_access_token
 from security import hash_password, verify_password
 from pydantic import BaseModel
@@ -147,7 +152,7 @@ Only return the caption.
 @app.post("/generate-caption")
 async def generate_caption(
     file: UploadFile = File(...),
-    style: str = "aesthetic",
+    style: str = Form("aesthetic"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -171,7 +176,8 @@ async def generate_caption(
     image_name=file.filename,
     caption=caption,
     style=style,
-    raw_description=raw_description
+    raw_description=raw_description,
+    user_id=current_user.id
 )
 
     # Return response
@@ -182,11 +188,39 @@ async def generate_caption(
     }
 
 @app.get("/history")
-def get_history(db: Session = Depends(get_db)):
+def get_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
 
-    history = get_all_captions(db)
+    history = get_user_captions(
+        db,
+        current_user.id
+    )
 
     return history
+
+@app.delete("/history/{caption_id}")
+def delete_history(
+    caption_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    deleted = delete_caption(
+        db,
+        caption_id,
+        current_user.id
+    )
+
+    if not deleted:
+        return {
+            "error": "Caption not found"
+        }
+
+    return {
+        "message": "Caption deleted successfully"
+    }
 
 @app.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from datetime import datetime
-
+from sqlalchemy import ForeignKey
 from database import Base
 
 
@@ -16,6 +16,10 @@ class CaptionHistory(Base):
     style = Column(String)
 
     raw_description = Column(String)
+    user_id = Column(
+    Integer,
+    ForeignKey("users.id")
+)
 
     created_at = Column(
         DateTime,

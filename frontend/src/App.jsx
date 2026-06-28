@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 function App() {
@@ -8,7 +8,7 @@ function App() {
   const [style, setStyle] = useState("aesthetic");
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [history, setHistory] = useState([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
@@ -16,7 +16,10 @@ function App() {
   const [loggedInUser] = useState(
   localStorage.getItem("username") || ""
 );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
+const captionsPerPage = 5;
   function handleImageUpload(event) {
     const uploadedFile = event.target.files[0];
 
@@ -38,6 +41,7 @@ function App() {
           password,
         }
       );
+      console.log(res.data);
       localStorage.setItem("token", res.data.access_token);
 localStorage.setItem("username", username);
 
@@ -97,6 +101,7 @@ setToken(res.data.access_token);
   );
 
   setCaption(res.data.caption);
+  loadHistory(); 
 } catch (error) {
   console.log(error);
   toast.error("Something went wrong");
@@ -104,6 +109,67 @@ setToken(res.data.access_token);
 
     setLoading(false);
   }
+
+  async function loadHistory() {
+  try {
+    const res = await axios.get(
+      "http://127.0.0.1:8000/history",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setHistory(res.data);
+
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function deleteCaption(id) {
+  try {
+    await axios.delete(
+      `http://127.0.0.1:8000/history/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    toast.success("Caption deleted!");
+
+    loadHistory();
+
+  } catch (err) {
+    console.log(err);
+    toast.error("Couldn't delete caption");
+  }
+}
+
+useEffect(() => {
+  if (token) {
+    loadHistory();
+  }
+}, [token]);
+
+const filteredHistory = history.filter((item) =>
+  item.caption.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  item.style.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  item.image_name.toLowerCase().includes(searchTerm.toLowerCase())
+);
+const indexOfLastCaption = currentPage * captionsPerPage;
+const indexOfFirstCaption = indexOfLastCaption - captionsPerPage;
+
+const currentCaptions = filteredHistory.slice(
+  indexOfFirstCaption,
+  indexOfLastCaption
+);
+const totalPages = Math.ceil(
+  filteredHistory.length / captionsPerPage
+);
 
   return (
     <div className="container">
@@ -230,6 +296,80 @@ localStorage.removeItem("username");
     Download Caption
   </button>
 )}
+<input
+  type="text"
+  placeholder="🔍 Search history..."
+  value={searchTerm}
+  onChange={(e) => {
+  setSearch(e.target.value);
+  setCurrentPage(1);
+}}
+  style={{
+    width: "100%",
+    padding: "10px",
+    marginBottom: "20px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+  }}
+/>
+<h2>My Caption History</h2>
+
+{currentCaptions.map((item) => (
+  <div
+    key={item.id}
+    style={{
+      border: "1px solid #ccc",
+      padding: "10px",
+      marginTop: "10px",
+      borderRadius: "8px",
+    }}
+  >
+    <p><strong>Image:</strong> {item.image_name}</p>
+    <p><strong>Style:</strong> {item.style}</p>
+    <p>{item.caption}</p>
+
+    <button
+  onClick={() => deleteCaption(item.id)}
+  style={{
+    marginTop: "10px",
+    background: "#ff4d4d",
+    color: "white",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "6px",
+    cursor: "pointer",
+  }}
+>
+  🗑 Delete
+</button>
+  </div>
+))}
+<div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+    marginTop: "20px",
+  }}
+>
+  <button
+    onClick={() => setCurrentPage(currentPage - 1)}
+    disabled={currentPage === 1}
+  >
+    Previous
+  </button>
+
+  <span>
+    Page {currentPage} of {totalPages || 1}
+  </span>
+
+  <button
+    onClick={() => setCurrentPage(currentPage + 1)}
+    disabled={currentPage === totalPages || totalPages === 0}
+  >
+    Next
+  </button>
+</div>
 </>
 )}
 
