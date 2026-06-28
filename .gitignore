@@ -14,3 +14,9 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+node_modules/
+backend/venv/
+frontend/node_modules/
+.env
+backend/.env

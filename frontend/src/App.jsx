@@ -1,7 +1,7 @@
 import "./App.css";
 import { useState } from "react";
 import axios from "axios";
-
+import toast, { Toaster } from "react-hot-toast";
 function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [file, setFile] = useState(null);
@@ -13,6 +13,9 @@ function App() {
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const [loggedInUser] = useState(
+  localStorage.getItem("username") || ""
+);
 
   function handleImageUpload(event) {
     const uploadedFile = event.target.files[0];
@@ -35,11 +38,12 @@ function App() {
           password,
         }
       );
-
       localStorage.setItem("token", res.data.access_token);
-      setToken(res.data.access_token);
+localStorage.setItem("username", username);
 
-      alert("Logged in successfully");
+setToken(res.data.access_token);
+
+      toast.success("Logged in successfully");
 
     } else {
 
@@ -51,13 +55,13 @@ function App() {
         }
       );
 
-      alert("Signup successful! Please login.");
+      toast.success("Signup successful! Please login.");
       setIsLogin(true);
 
     }
 
   } catch (err) {
-    alert("Authentication failed");
+    toast.error("Authentication failed");
     console.log(err);
   }
 }
@@ -65,13 +69,13 @@ function App() {
   async function generateCaption() {
 
     if (!token) {
-  alert("Please login first");
+  toast.error("Please login first");
   return;
 }
 
     if (!file) {
 
-      alert("Please upload an image first");
+      toast.error("Please upload an image first");
       return;
     }
 
@@ -95,7 +99,7 @@ function App() {
   setCaption(res.data.caption);
 } catch (error) {
   console.log(error);
-  alert("Something went wrong");
+  toast.error("Something went wrong");
 }
 
     setLoading(false);
@@ -103,6 +107,7 @@ function App() {
 
   return (
     <div className="container">
+      <Toaster position="top-right" />
       {!token ? (
   <div className="auth-box">
 
@@ -144,6 +149,19 @@ function App() {
       <p className="subtitle">
         AI Instagram Caption Generator
       </p>
+      <p>Welcome, {loggedInUser} 👋</p>
+      <button
+  onClick={() => {
+    localStorage.removeItem("token");
+localStorage.removeItem("username");
+    setToken("");
+    setCaption("");
+    setSelectedImage(null);
+    setFile(null);
+  }}
+>
+  Logout
+</button>
 
       <label className="upload-btn">
         Upload Image
@@ -170,14 +188,48 @@ function App() {
         <option value="minimal">Minimal ✨</option>
       </select>
 
-      <button onClick={generateCaption}>
-        {loading ? "Generating..." : "Generate Caption"}
-      </button>
+      <button
+  onClick={generateCaption}
+  disabled={loading}
+>
+  {loading ? "✨ Generating Caption..." : "Generate Caption"}
+</button>
 
       <div className="output">
   {caption || "Your caption will appear here..."}
 </div>
+{caption && (
+  <button
+    onClick={() => {
+      navigator.clipboard.writeText(caption);
+      toast.success("Caption copied!");
+    }}
+  >
+    Copy Caption
+  </button>
+)}
+{caption && (
+  <button
+    onClick={() => {
+      const blob = new Blob([caption], {
+        type: "text/plain",
+      });
 
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = "caption.txt";
+
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }}
+  >
+    Download Caption
+  </button>
+)}
 </>
 )}
 
