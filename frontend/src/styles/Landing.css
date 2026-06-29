@@ -1,0 +1,76 @@
+.hero{
+    min-height:100vh;
+    background:#0f172a;
+    color:white;
+}
+
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:25px 60px;
+}
+
+.navbar button{
+    width:120px;
+}
+
+.hero-content{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    height:80vh;
+    gap:25px;
+}
+
+.hero-content h1{
+    font-size:4rem;
+    width:900px;
+}
+
+.hero-content p{
+    width:700px;
+    color:#cbd5e1;
+    line-height:1.7;
+}
+
+.hero-btn{
+    width:200px;
+}
+
+.features{
+    padding:80px;
+    background:#111827;
+    text-align:center;
+}
+
+.feature-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:30px;
+    margin-top:50px;
+}
+
+.card{
+    background:#1e293b;
+    padding:30px;
+    border-radius:15px;
+}
+
+.card p{
+    margin-top:15px;
+    color:#cbd5e1;
+}
+
+footer{
+    background:black;
+    padding:35px;
+    text-align:center;
+}
+
+footer p{
+    color:#94a3b8;
+    margin-top:10px;
+}

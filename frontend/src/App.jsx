@@ -2,6 +2,11 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import { Routes, Route, Navigate} from "react-router-dom";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
 function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [emojiIntensity, setEmojiIntensity] = useState("medium");
@@ -227,253 +232,40 @@ const totalPages = Math.ceil(
 );
 
   return (
-    <div className="container">
-      <Toaster position="top-right" />
-      {!token ? (
-  <div className="auth-box">
-
-    <h2>{isLogin ? "Login" : "Signup"}</h2>
-
-    <input
-      type="text"
-      placeholder="Username"
-      value={username}
-      onChange={(e) => setUsername(e.target.value)}
-    />
-
-    <input
-      type="password"
-      placeholder="Password"
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-    />
-
-    <button onClick={handleAuth}>
-      {isLogin ? "Login" : "Signup"}
-    </button>
-
-    <p
-      style={{ cursor: "pointer", color: "blue" }}
-      onClick={() => setIsLogin(!isLogin)}
-    >
-      {isLogin
-        ? "Don't have an account? Signup"
-        : "Already have an account? Login"}
-    </p>
-
-  </div>
-) : (
   <>
+    <Toaster position="top-right" />
 
-      <h1>Snapverse ✨</h1>
+    <Routes>
 
-      <p className="subtitle">
-        AI Instagram Caption Generator
-      </p>
-      <p>Welcome, {loggedInUser} 👋</p>
-      <button
-  onClick={() => {
-    localStorage.removeItem("token");
-localStorage.removeItem("username");
-    setToken("");
-    setCaption([]);
-    setSelectedImage(null);
-    setFile(null);
-    setLastImage(null);
-  }}
->
-  Logout
-</button>
+      <Route
+        path="/"
+        element={<Landing />}
+      />
 
-      <label className="upload-btn">
-        Upload Image
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          hidden
-        />
-      </label>
+      <Route
+        path="/login"
+        element={
+          token ? (
+            <Navigate to="/dashboard" />
+          ) : (
+            <Login />
+          )
+        }
+      />
 
-      {selectedImage && (
-        <img src={selectedImage} className="preview" />
-      )}
-
-      <select
-        value={style}
-        onChange={(e) => setStyle(e.target.value)}
-      >
-        <option value="aesthetic">Aesthetic 🌸</option>
-        <option value="funny">Funny 😂</option>
-        <option value="savage">Savage 🔥</option>
-        <option value="poetic">Poetic 🌙</option>
-        <option value="minimal">Minimal ✨</option>
-      </select>
-
-      <select
-  value={emojiIntensity}
-  onChange={(e) => setEmojiIntensity(e.target.value)}
->
-  <option value="none">No Emojis</option>
-  <option value="low">Low Emojis 🙂</option>
-  <option value="medium">Medium Emojis ✨</option>
-  <option value="high">High Emojis 🔥</option>
-</select>
-
-     <select
-  value={captionLength}
-  onChange={(e) => setCaptionLength(e.target.value)}
->
-  <option value="short">Short ✂️</option>
-  <option value="medium">Medium 📝</option>
-  <option value="long">Long 📖</option>
-</select>
-
-      <button
-  onClick={generateCaption}
-  disabled={loading}
->
-  {loading ? "✨ Generating..." : "Generate Caption"}
-</button>
-{caption.length > 0 && (
-  <button
-  onClick={regenerateCaption}
-  disabled={regenerating}
->
-  {regenerating
-    ? "🔄 Regenerating..."
-    : "🔄 Regenerate Caption"}
-</button>
-)}
-
-      {caption.length === 0 ? (
-  <div className="output">
-    Your caption will appear here...
-  </div>
-) : (
-  <>
-    {caption.map((cap, index) => (
-      <div
-        key={index}
-        className="output"
-        style={{ marginBottom: "20px" }}
-      >
-        <h3>Suggestion {index + 1}</h3>
-
-        <p>{cap}</p>
-
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(cap);
-            toast.success("Copied!");
-          }}
-        >
-          Copy Caption
-        </button>
-
-        <button
-          onClick={() => {
-            const blob = new Blob([cap], {
-              type: "text/plain",
-            });
-
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement("a");
-
-            a.href = url;
-            a.download = `caption-${index + 1}.txt`;
-
-            a.click();
-
-            URL.revokeObjectURL(url);
-          }}
-        >
-          Download Caption
-        </button>
-      </div>
-    ))}
+      <Route
+        path="/dashboard"
+        element={
+          token ? (
+            <Dashboard />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+    </Routes>
   </>
-)}
-<input
-  type="text"
-  placeholder="🔍 Search history..."
-  value={searchTerm}
-  onChange={(e) => {
-  setSearchTerm(e.target.value);
-  setCurrentPage(1);
-}}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "20px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-  }}
-/>
-<h2>My Caption History</h2>
-
-{currentCaptions.map((item) => (
-  <div
-    key={item.id}
-    style={{
-      border: "1px solid #ccc",
-      padding: "10px",
-      marginTop: "10px",
-      borderRadius: "8px",
-    }}
-  >
-    <p><strong>Image:</strong> {item.image_name}</p>
-    <p><strong>Style:</strong> {item.style}</p>
-    <p>{item.caption}</p>
-
-    <button
-  onClick={() => deleteCaption(item.id)}
-  style={{
-    marginTop: "10px",
-    background: "#ff4d4d",
-    color: "white",
-    border: "none",
-    padding: "8px 14px",
-    borderRadius: "6px",
-    cursor: "pointer",
-  }}
->
-  🗑 Delete
-</button>
-  </div>
-))}
-<div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    gap: "10px",
-    marginTop: "20px",
-  }}
->
-  <button
-    onClick={() => setCurrentPage(currentPage - 1)}
-    disabled={currentPage === 1}
-  >
-    Previous
-  </button>
-
-  <span>
-    Page {currentPage} of {totalPages || 1}
-  </span>
-
-  <button
-    onClick={() => setCurrentPage(currentPage + 1)}
-    disabled={currentPage === totalPages || totalPages === 0}
-  >
-    Next
-  </button>
-</div>
-</>
-)}
-
-</div>
-  );
+);
 }
 
 export default App;
