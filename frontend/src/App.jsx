@@ -4,10 +4,13 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 function App() {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [emojiIntensity, setEmojiIntensity] = useState("medium");
+  const [captionLength, setCaptionLength] = useState("medium");
   const [file, setFile] = useState(null);
   const [style, setStyle] = useState("aesthetic");
-  const [caption, setCaption] = useState("");
+  const [caption, setCaption] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [history, setHistory] = useState([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +19,7 @@ function App() {
   const [loggedInUser] = useState(
   localStorage.getItem("username") || ""
 );
+  const [lastImage, setLastImage] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -25,6 +29,7 @@ const captionsPerPage = 5;
 
     if (uploadedFile) {
       setFile(uploadedFile);
+      setLastImage(uploadedFile);
       setSelectedImage(URL.createObjectURL(uploadedFile));
     }
   }
@@ -88,6 +93,8 @@ setToken(res.data.access_token);
     const formData = new FormData();
     formData.append("file", file);
     formData.append("style", style);
+    formData.append("emoji_intensity", emojiIntensity);
+    formData.append("caption_length", captionLength);
 
     try {
   const res = await axios.post(
@@ -100,7 +107,12 @@ setToken(res.data.access_token);
     }
   );
 
-  setCaption(res.data.caption);
+  setCaption(
+  res.data.caption
+    .split("---")
+    .map((c) => c.trim())
+    .filter((c) => c !== "")
+);
   loadHistory(); 
 } catch (error) {
   console.log(error);
@@ -155,6 +167,49 @@ useEffect(() => {
   }
 }, [token]);
 
+async function regenerateCaption() {
+  if (!lastImage) {
+    toast.error("Upload an image first");
+    return;
+  }
+
+  setRegenerating(true);
+
+  const formData = new FormData();
+
+  formData.append("file", lastImage);
+  formData.append("style", style);
+  formData.append("emoji_intensity", emojiIntensity);
+  formData.append("caption_length", captionLength);
+
+  try {
+    const res = await axios.post(
+      "http://127.0.0.1:8000/generate-caption",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setCaption(
+  res.data.caption
+    .split("---")
+    .map((c) => c.trim())
+    .filter((c) => c !== "")
+);
+
+    loadHistory();
+
+    toast.success("New caption generated!");
+  } catch (err) {
+    console.log(err);
+    toast.error("Couldn't regenerate");
+  }
+
+  setRegenerating(false);
+}
 const filteredHistory = history.filter((item) =>
   item.caption.toLowerCase().includes(searchTerm.toLowerCase()) ||
   item.style.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -221,9 +276,10 @@ const totalPages = Math.ceil(
     localStorage.removeItem("token");
 localStorage.removeItem("username");
     setToken("");
-    setCaption("");
+    setCaption([]);
     setSelectedImage(null);
     setFile(null);
+    setLastImage(null);
   }}
 >
   Logout
@@ -254,54 +310,97 @@ localStorage.removeItem("username");
         <option value="minimal">Minimal ✨</option>
       </select>
 
+      <select
+  value={emojiIntensity}
+  onChange={(e) => setEmojiIntensity(e.target.value)}
+>
+  <option value="none">No Emojis</option>
+  <option value="low">Low Emojis 🙂</option>
+  <option value="medium">Medium Emojis ✨</option>
+  <option value="high">High Emojis 🔥</option>
+</select>
+
+     <select
+  value={captionLength}
+  onChange={(e) => setCaptionLength(e.target.value)}
+>
+  <option value="short">Short ✂️</option>
+  <option value="medium">Medium 📝</option>
+  <option value="long">Long 📖</option>
+</select>
+
       <button
   onClick={generateCaption}
   disabled={loading}
 >
-  {loading ? "✨ Generating Caption..." : "Generate Caption"}
+  {loading ? "✨ Generating..." : "Generate Caption"}
 </button>
-
-      <div className="output">
-  {caption || "Your caption will appear here..."}
-</div>
-{caption && (
+{caption.length > 0 && (
   <button
-    onClick={() => {
-      navigator.clipboard.writeText(caption);
-      toast.success("Caption copied!");
-    }}
-  >
-    Copy Caption
-  </button>
+  onClick={regenerateCaption}
+  disabled={regenerating}
+>
+  {regenerating
+    ? "🔄 Regenerating..."
+    : "🔄 Regenerate Caption"}
+</button>
 )}
-{caption && (
-  <button
-    onClick={() => {
-      const blob = new Blob([caption], {
-        type: "text/plain",
-      });
 
-      const url = URL.createObjectURL(blob);
+      {caption.length === 0 ? (
+  <div className="output">
+    Your caption will appear here...
+  </div>
+) : (
+  <>
+    {caption.map((cap, index) => (
+      <div
+        key={index}
+        className="output"
+        style={{ marginBottom: "20px" }}
+      >
+        <h3>Suggestion {index + 1}</h3>
 
-      const a = document.createElement("a");
+        <p>{cap}</p>
 
-      a.href = url;
-      a.download = "caption.txt";
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(cap);
+            toast.success("Copied!");
+          }}
+        >
+          Copy Caption
+        </button>
 
-      a.click();
+        <button
+          onClick={() => {
+            const blob = new Blob([cap], {
+              type: "text/plain",
+            });
 
-      URL.revokeObjectURL(url);
-    }}
-  >
-    Download Caption
-  </button>
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+
+            a.href = url;
+            a.download = `caption-${index + 1}.txt`;
+
+            a.click();
+
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Download Caption
+        </button>
+      </div>
+    ))}
+  </>
 )}
 <input
   type="text"
   placeholder="🔍 Search history..."
   value={searchTerm}
   onChange={(e) => {
-  setSearch(e.target.value);
+  setSearchTerm(e.target.value);
   setCurrentPage(1);
 }}
   style={{

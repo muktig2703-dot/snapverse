@@ -6,7 +6,7 @@ from models import CaptionHistory, User
 Base.metadata.create_all(bind=engine)
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from openai import OpenAI
+from google import genai
 from fastapi import Depends
 from fastapi import Form
 from sqlalchemy.orm import Session
@@ -46,11 +46,9 @@ app.add_middleware(
 # ----------------------------
 # OpenRouter Client
 # ----------------------------
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),
+client = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY")
 )
-
 # ----------------------------
 # Helper Function
 # Convert image to Base64
@@ -63,48 +61,43 @@ def encode_image(image_bytes):
 # AI Call #1
 # Generate Raw Description
 # ----------------------------
+from google.genai import types
+
 def generate_image_description(base64_image, mime_type):
 
-    response = client.chat.completions.create(
-        model="openai/gpt-4o-mini",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": """
-Describe this image objectively.
+    image_bytes = base64.b64decode(base64_image)
 
-Rules:
-- Mention important objects
-- Mention people if present
-- Mention surroundings
-- Mention actions
-- No emojis
-- No Instagram captions
-- Maximum 60 words
-"""
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{mime_type};base64,{base64_image}"
-                        }
-                    }
-                ]
-            }
-        ]
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[
+            "Describe this image objectively.\n\n"
+            "Rules:\n"
+            "- Mention important objects\n"
+            "- Mention people if present\n"
+            "- Mention surroundings\n"
+            "- Mention actions\n"
+            "- No emojis\n"
+            "- No Instagram captions\n"
+            "- Maximum 60 words",
+
+            types.Part.from_bytes(
+                data=image_bytes,
+                mime_type=mime_type,
+            ),
+        ],
     )
 
-    return response.choices[0].message.content
-
-
+    return response.text
 # ----------------------------
 # AI Call #2
 # Generate Instagram Caption
 # ----------------------------
-def generate_instagram_caption(raw_description, style):
+def generate_instagram_caption(
+    raw_description,
+    style,
+    emoji_intensity,
+    caption_length
+):
 
     prompt = f"""
 You are Snapverse, an elite Instagram caption generator.
@@ -112,40 +105,60 @@ You are Snapverse, an elite Instagram caption generator.
 Image Description:
 {raw_description}
 
-Generate a {style} Instagram caption.
+Generate THREE different {style} Instagram captions.
 
-RULES:
-- Keep captions short (1–2 lines max)
-- Make it engaging and scroll-stopping
-- Use emojis naturally
-- Sound like a Gen-Z creator
-- Do NOT simply repeat the description
-- Do NOT explain your answer
+Each caption should include:
 
-STYLE GUIDE:
-- aesthetic → poetic 🌸
-- funny → witty 😂
-- savage → bold 🔥
-- poetic → emotional 🌙
-- minimal → clean ✨
+- A caption
+- 8-12 relevant hashtags
+- Emoji Intensity:
+{emoji_intensity}
+- Caption Length:
+{caption_length}
+Rules:
+- Each caption must be different.
+- Each caption should match the {style} style.
+- Separate every caption with:
 
-OUTPUT:
-Only return the caption.
+Emoji Rules:
+
+- none → Do not use emojis.
+- low → Use 1-2 emojis.
+- medium → Use 3-5 emojis.
+- high → Use lots of emojis naturally.
+
+Caption Length Rules:
+
+- short → One short sentence.
+- medium → Two to three engaging sentences.
+- long → Four to six engaging sentences with storytelling.
+---
+
+Output Example:
+
+Caption 1
+
+#hashtags
+
+---
+
+Caption 2
+
+#hashtags
+
+---
+
+Caption 3
+
+#hashtags
 """
 
-    response = client.chat.completions.create(
-        model="openai/gpt-4o-mini",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
     )
 
-    return response.choices[0].message.content
-
-
+    return response.text
 # ----------------------------
 # API Endpoint
 # ----------------------------
@@ -153,6 +166,8 @@ Only return the caption.
 async def generate_caption(
     file: UploadFile = File(...),
     style: str = Form("aesthetic"),
+    emoji_intensity: str = Form("medium"),
+    caption_length: str = Form("medium"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -168,7 +183,9 @@ async def generate_caption(
     # Step 2: Generate Instagram caption
     caption = generate_instagram_caption(
         raw_description,
-        style
+        style,
+        emoji_intensity,
+        caption_length
     )
 
     save_caption(
