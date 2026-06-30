@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
-
 import "../styles/Login.css";
 import Background from "../components/Background";
 
@@ -12,7 +11,6 @@ function Signup() {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-
     async function handleSignup() {
 
         try {

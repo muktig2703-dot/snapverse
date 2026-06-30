@@ -28,6 +28,13 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+class ChangeUsername(BaseModel):
+    new_username: str
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
 # Load environment variables
 load_dotenv()
 # ----------------------------
@@ -293,4 +300,55 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer"
+    }
+
+@app.put("/change-username")
+def change_username(
+    data: ChangeUsername,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    existing = (
+        db.query(User)
+        .filter(User.username == data.new_username)
+        .first()
+    )
+
+    if existing:
+        return {
+            "error": "Username already exists"
+        }
+
+    current_user.username = data.new_username
+
+    db.commit()
+
+    return {
+        "message": "Username updated successfully"
+    }
+
+@app.put("/change-password")
+def change_password(
+    data: ChangePassword,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    if not verify_password(
+        data.current_password,
+        current_user.password
+    ):
+        return {
+            "error": "Current password is incorrect"
+        }
+
+    current_user.password = hash_password(
+        data.new_password
+    )
+
+    db.commit()
+
+    return {
+        "message": "Password updated successfully"
     }

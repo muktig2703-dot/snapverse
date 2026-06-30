@@ -255,7 +255,7 @@ function logout() {
                 logout={logout}
             />
         ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace/>
         )
     }
 />

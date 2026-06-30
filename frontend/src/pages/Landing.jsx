@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import "../styles/Landing.css";
 import Background from "../components/Background";
 import Slideshow from "../components/Slideshow";
-
 function Landing() {
   return (
     <>

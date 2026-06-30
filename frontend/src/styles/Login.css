@@ -14,6 +14,11 @@ z-index:2;
 
 padding:40px;
 
+background: radial-gradient(
+circle at top,
+rgba(124,58,237,.25),
+transparent 60%
+);
 }
 
 .login-card{
@@ -29,13 +34,20 @@ box-shadow:
 display:flex;
 flex-direction:column;
 gap:22px;
-animation:fadeUp .8s ease;
 transition:
 transform .25s ease,
 box-shadow .3s ease;
 transform-style: preserve-3d;
+animation:fadeUp .8s ease, floatCard 6s ease-in-out infinite;
+
 }
 
+.login-card:hover{
+transform:translateY(-6px);
+box-shadow:
+0 40px 90px rgba(0,0,0,.35),
+0 0 80px rgba(124,58,237,.25);
+}
 .login-logo{
 
 width:80px;
@@ -103,6 +115,10 @@ transition:.3s;
 
 }
 
+.login-card input:hover{
+background:rgba(255,255,255,.24);
+}
+
 .login-card input::placeholder{
 
 color:rgba(255,255,255,.8);
@@ -143,10 +159,11 @@ transition:.3s;
 
 .login-btn:hover{
 
-transform:translateY(-3px);
+transform:translateY(-3px) scale(1.02);
 
 box-shadow:
-0 15px 35px rgba(255,255,255,.35);
+0 20px 45px rgba(255,255,255,.25),
+0 0 25px rgba(124,58,237,.35);
 
 }
 
@@ -256,5 +273,13 @@ opacity:1;
 transform:translateY(0);
 
 }
+
+}
+
+@keyframes floatCard{
+
+0%{ transform:translateY(0px); }
+50%{ transform:translateY(-8px); }
+100%{ transform:translateY(0px); }
 
 }

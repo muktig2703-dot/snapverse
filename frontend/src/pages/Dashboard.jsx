@@ -1,6 +1,6 @@
 import "../styles/Dashboard.css";
 import Background from "../components/Background";
-
+import ProfileMenu from "../components/ProfileMenu";
 function Dashboard({
 selectedImage = null,
 file = null,
@@ -25,7 +25,8 @@ regenerateCaption = () => {},
 deleteCaption = () => {},
 currentCaptions = [],
 logout
-}){
+})
+{
   return (
     <>
       <Background />
@@ -36,17 +37,17 @@ logout
 
         <header className="topbar">
 
-          <div className="profile-btn">
-            👤 Profile
-          </div>
+          <ProfileMenu
+
+    username={localStorage.getItem("username")}
+
+    logout={logout}
+
+/>
 
           <h2>Snapverse</h2>
 
           <div className="topbar-right">
-
-            <button className="theme-btn">
-              🌙
-            </button>
 
             <button
 className="logout-btn"
