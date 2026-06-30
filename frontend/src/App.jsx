@@ -17,9 +17,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [history, setHistory] = useState([]);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLogin, setIsLogin] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [loggedInUser] = useState(
   localStorage.getItem("username") || ""
@@ -38,47 +35,6 @@ const captionsPerPage = 5;
       setSelectedImage(URL.createObjectURL(uploadedFile));
     }
   }
-
-  async function handleAuth() {
-  try {
-
-    if (isLogin) {
-
-      const res = await axios.post(
-        "http://127.0.0.1:8000/login",
-        {
-          username,
-          password,
-        }
-      );
-      console.log(res.data);
-      localStorage.setItem("token", res.data.access_token);
-localStorage.setItem("username", username);
-
-setToken(res.data.access_token);
-
-      toast.success("Logged in successfully");
-
-    } else {
-
-      await axios.post(
-        "http://127.0.0.1:8000/signup",
-        {
-          username,
-          password,
-        }
-      );
-
-      toast.success("Signup successful! Please login.");
-      setIsLogin(true);
-
-    }
-
-  } catch (err) {
-    toast.error("Authentication failed");
-    console.log(err);
-  }
-}
 
   async function generateCaption() {
 
@@ -230,7 +186,21 @@ const currentCaptions = filteredHistory.slice(
 const totalPages = Math.ceil(
   filteredHistory.length / captionsPerPage
 );
+function logout() {
 
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+
+    setToken("");
+
+    setCaption([]);
+    setHistory([]);
+
+    setSelectedImage(null);
+    setFile(null);
+    setLastImage(null);
+
+}
   return (
   <>
     <Toaster position="top-right" />
@@ -254,15 +224,51 @@ const totalPages = Math.ceil(
       />
 
       <Route
-        path="/dashboard"
-        element={
-          token ? (
-            <Dashboard />
-          ) : (
+    path="/dashboard"
+    element={
+        token ? (
+            <Dashboard
+                selectedImage={selectedImage}
+                file={file}
+                style={style}
+                emojiIntensity={emojiIntensity}
+                captionLength={captionLength}
+                caption={caption}
+                loading={loading}
+                regenerating={regenerating}
+                searchTerm={searchTerm}
+                history={history}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                currentCaptions={currentCaptions}
+
+                setStyle={setStyle}
+                setEmojiIntensity={setEmojiIntensity}
+                setCaptionLength={setCaptionLength}
+                setSearchTerm={setSearchTerm}
+                setCurrentPage={setCurrentPage}
+
+                handleImageUpload={handleImageUpload}
+                generateCaption={generateCaption}
+                regenerateCaption={regenerateCaption}
+                deleteCaption={deleteCaption}
+                logout={logout}
+            />
+        ) : (
             <Navigate to="/login" />
-          )
-        }
-      />
+        )
+    }
+/>
+      <Route
+  path="/signup"
+  element={
+    token ? (
+      <Navigate to="/dashboard" />
+    ) : (
+      <Signup />
+    )
+  }
+/>
     </Routes>
   </>
 );

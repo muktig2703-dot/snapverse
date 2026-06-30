@@ -1,33 +1,59 @@
 import { Link } from "react-router-dom";
 import "../styles/Landing.css";
+import Background from "../components/Background";
+import Slideshow from "../components/Slideshow";
 
 function Landing() {
   return (
     <>
       <section className="hero">
+        <Background />
 
         <nav className="navbar">
-          <h2>✨ Snapverse</h2>
+          <h2 className="logo">Snapverse ✨</h2>
 
           <Link to="/login">
-            <button>Login</button>
+            <button className="nav-btn">Login</button>
           </Link>
         </nav>
 
         <div className="hero-content">
 
-          <h1>Create Amazing Instagram Captions with AI</h1>
+          <div className="hero-left">
 
-          <p>
-            Upload an image, choose your style, and let AI generate
-            creative captions with hashtags in seconds.
-          </p>
+            <span className="badge">
+              AI Powered Instagram Caption Generator
+            </span>
 
-          <Link to="/login">
-            <button className="hero-btn">
-              Get Started
-            </button>
-          </Link>
+            <h1>
+              Create Stunning Instagram Captions
+              in Seconds.
+            </h1>
+
+            <p>
+              Upload any image and let AI instantly generate
+              aesthetic, funny, poetic, savage or minimal captions
+              complete with hashtags, emoji control and multiple
+              creative suggestions.
+            </p>
+
+            <div className="hero-buttons">
+
+              <Link to="/login">
+                <button className="hero-btn">
+                  Get Started →
+                </button>
+              </Link>
+
+            </div>
+
+          </div>
+
+          <div className="hero-right">
+
+            <Slideshow />
+
+          </div>
 
         </div>
 
@@ -35,28 +61,28 @@ function Landing() {
 
       <section className="features">
 
-        <h2>Why Snapverse?</h2>
+        <h2>Everything You Need</h2>
 
         <div className="feature-grid">
 
           <div className="card">
-            <h3>📸 AI Image Understanding</h3>
+            <h3>📸 AI Vision</h3>
             <p>
-              Understands your uploaded image before writing captions.
+              Understands your image before writing captions.
             </p>
           </div>
 
           <div className="card">
-            <h3>✨ Multiple Caption Styles</h3>
+            <h3>✨ Multiple Styles</h3>
             <p>
-              Funny, Aesthetic, Savage, Poetic and Minimal.
+              Funny, Minimal, Poetic, Aesthetic and Savage.
             </p>
           </div>
 
           <div className="card">
-            <h3>🚀 Instant Generation</h3>
+            <h3>🚀 Instant Results</h3>
             <p>
-              Generate three captions within seconds.
+              Generate multiple captions in just seconds.
             </p>
           </div>
 
@@ -66,17 +92,18 @@ function Landing() {
 
       <footer>
 
-        <h3>Snapverse</h3>
+        <h2>Snapverse</h2>
 
         <p>
           AI Powered Instagram Caption Generator
         </p>
 
         <p>
-          Built with React + FastAPI + Google Gemini
+          Built using React • FastAPI • Google Gemini
         </p>
 
       </footer>
+
     </>
   );
 }

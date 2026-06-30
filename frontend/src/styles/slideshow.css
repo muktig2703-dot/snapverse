@@ -1,0 +1,92 @@
+.phone-frame{
+
+    width:360px;
+    height:700px;
+
+    background:#111827;
+
+    border-radius:42px;
+
+    padding:12px;
+
+    position:relative;
+
+    box-shadow:0 30px 80px rgba(0,0,0,.45);
+
+    animation:float 5s ease-in-out infinite;
+}
+
+.camera{
+
+    width:120px;
+    height:26px;
+
+    background:black;
+
+    border-radius:20px;
+
+    position:absolute;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    top:14px;
+
+    z-index:5;
+}
+
+.slideshow{
+
+    width:100%;
+    height:100%;
+
+    overflow:hidden;
+
+    border-radius:32px;
+
+    position:relative;
+}
+
+.slide{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    opacity:0;
+
+    transition:opacity 1s;
+}
+
+.slide.active{
+
+    opacity:1;
+}
+
+@keyframes float{
+
+0%{
+
+transform:translateY(0px);
+
+}
+
+50%{
+
+transform:translateY(-12px);
+
+}
+
+100%{
+
+transform:translateY(0px);
+
+}
+
+}
