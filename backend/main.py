@@ -11,6 +11,8 @@ from fastapi import Depends
 from fastapi import Form
 from sqlalchemy.orm import Session
 from database import get_db
+import cloudinary.uploader
+import cloudinary_config
 from crud import (
     save_caption,
     get_user_captions,
@@ -181,6 +183,12 @@ async def generate_caption(
 
     # Read uploaded image
     image_bytes = await file.read()
+    upload_result = cloudinary.uploader.upload(
+    image_bytes,
+    folder="snapverse"
+)
+
+    image_url = upload_result["secure_url"]
     mime_type = file.content_type
     # Convert image to Base64
     base64_image = encode_image(image_bytes) 
@@ -198,6 +206,7 @@ async def generate_caption(
     save_caption(
     db=db,
     image_name=file.filename,
+    image_url=image_url,
     caption=caption,
     style=style,
     raw_description=raw_description,
@@ -208,7 +217,8 @@ async def generate_caption(
     return {
         "caption": caption,
         "style": style,
-        "raw_description": raw_description
+        "raw_description": raw_description,
+        "image_url": image_url
     }
 
 @app.get("/history")

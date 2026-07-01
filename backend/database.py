@@ -1,13 +1,19 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# SQLite database
-DATABASE_URL = "sqlite:///./snapverse.db"
+load_dotenv()
+
+print(os.getcwd())
+print(os.getenv("DATABASE_URL"))
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Create engine
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    pool_pre_ping=True
 )
 
 # Create session

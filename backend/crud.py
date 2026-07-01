@@ -5,6 +5,7 @@ from models import CaptionHistory
 def save_caption(
     db: Session,
     image_name: str,
+    image_url,
     caption: str,
     style: str,
     raw_description: str,
@@ -12,6 +13,7 @@ def save_caption(
 ):
     new_caption = CaptionHistory(
     image_name=image_name,
+    image_url=image_url,
     caption=caption,
     style=style,
     raw_description=raw_description,

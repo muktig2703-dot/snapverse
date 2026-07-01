@@ -11,6 +11,8 @@ class CaptionHistory(Base):
 
     image_name = Column(String)
 
+    image_url = Column(String)
+
     caption = Column(String)
 
     style = Column(String)
