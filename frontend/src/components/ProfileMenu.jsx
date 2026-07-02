@@ -17,7 +17,7 @@ function ProfileMenu({ username, logout }) {
       const token = localStorage.getItem("token");
 
       const res = await axios.put(
-        "http://127.0.0.1:8000/change-username",
+        "https://snapverse-api26.onrender.com/change-username",
         {
           new_username: newUsername,
         },
@@ -60,7 +60,7 @@ function ProfileMenu({ username, logout }) {
 
         const res=await axios.put(
 
-            "http://127.0.0.1:8000/change-password",
+            "https://snapverse-api26.onrender.com/change-password",
 
             {
 

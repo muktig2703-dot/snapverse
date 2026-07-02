@@ -59,7 +59,7 @@ const captionsPerPage = 5;
 
     try {
   const res = await axios.post(
-    "http://127.0.0.1:8000/generate-caption",
+    "https://snapverse-api26.onrender.com/generate-caption",
     formData,
     {
       headers: {
@@ -86,7 +86,7 @@ const captionsPerPage = 5;
   async function loadHistory() {
   try {
     const res = await axios.get(
-      "http://127.0.0.1:8000/history",
+      "https://snapverse-api26.onrender.com/history",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -104,7 +104,7 @@ const captionsPerPage = 5;
 async function deleteCaption(id) {
   try {
     await axios.delete(
-      `http://127.0.0.1:8000/history/${id}`,
+      `https://snapverse-api26.onrender.com/history/${id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -145,7 +145,7 @@ async function regenerateCaption() {
 
   try {
     const res = await axios.post(
-      "http://127.0.0.1:8000/generate-caption",
+      "https://snapverse-api26.onrender.com/generate-caption",
       formData,
       {
         headers: {
