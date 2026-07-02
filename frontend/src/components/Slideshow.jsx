@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "../styles/Slideshow.css";
+import "../styles/slideshow.css";
 
 const images = [
   "/assets/img1.jpeg",
