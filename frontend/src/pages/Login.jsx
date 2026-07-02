@@ -32,10 +32,11 @@ function Login() {
                 "username",
                 username
             );
+            window.location.reload();
 
             toast.success("Login Successful!");
 
-            window.location.href = "/dashboard";
+            navigate("/dashboard");
 
         }
 
